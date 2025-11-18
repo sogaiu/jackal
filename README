@@ -1,0 +1,57 @@
+Usage: jakl all-calls <file-or-dir>...
+       jakl calls-to <symbol> <file-or-dir>...
+       jakl who-calls <symbol> <file-or-dir>...
+
+       jakl [-h|--help]
+
+Query some Janet source code for call information.
+
+Commands:
+
+  all-calls              show all identified calls
+  calls-to               show particular calls to <symbol>
+  who-calls              show callers of <symbol>
+
+Parameters:
+
+  <symbol>               name of identifier to query with
+  <file-or-dir>          path to file or directory
+
+Options:
+
+  -h, --help             show this output
+
+Examples:
+
+  all-calls:
+
+    Show all calls within a file:
+
+    $ jakl all-calls data/simple.janet
+
+    Show all calls within a directory of `.janet` files
+
+    $ jakl all-calls data/
+
+  calls-to:
+
+    Show all calls to `def` within a file:
+
+    $ jakl calls-to def data/simple.janet
+
+    Show all calls to `default` within a directory of
+    `.janet` files:
+
+    $ jakl calls-to default data/
+
+  who-calls:
+
+    Show all callers of `default` within a file:
+
+    $ jakl who-calls default data/zipper.janet
+
+    Show all callers of `default` within a directory of
+    `.janet files`:
+
+    $ jakl who-calls default data/
+
