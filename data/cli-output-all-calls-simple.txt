@@ -1,0 +1,13 @@
+# searching space: @["data/simple.janet"] ...
+
+# 1 # emacs data/simple.janet
+
+def # 1 14 19
+defn # 25
+map # 28
+
+# search space: @["data/simple.janet"]
+# common prefix: ""
+# files searched: 1
+# files analyzed: 1
+# number of results: 5
