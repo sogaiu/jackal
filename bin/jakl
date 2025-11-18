@@ -1,0 +1,8 @@
+#! /usr/bin/env janet
+
+(import jackal/lib/cli)
+
+(defn main
+  [& args]
+  (cli/main ;args))
+
