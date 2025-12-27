@@ -5,11 +5,11 @@
  :vendored
  [{:name "some-bundle-bits"
    :url "https://github.com/sogaiu/some-bundle-bits"
-   :tag "b9059643baa2d0a822f915e9f1b6cd80308d23c4"
+   :tag "7ddb7ec53a6eb8c81b0c22bb7710a01fff57a759"
    :paths [["sbb.janet" "bundle/"]]}
   {:name "jtfm"
    :url "https://github.com/sogaiu/jtfm"
-   :tag "b383d182958875b5aa680bde391f41194843f2a2"
+   :tag "90435e12e3f787ef8b2b0e3a6e6e967dd5fe729a"
    :paths [["jtfm.janet" "bin/"]]}
   {:name "jell"
    :url "https://github.com/sogaiu/jell"
