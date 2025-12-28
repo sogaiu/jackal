@@ -7,6 +7,9 @@
   (when (or (not head) (= head "-h") (= head "--help"))
     (break {:show-help true}))
   #
+  (when (or (not head) (= head "-v") (= head "--version"))
+    (break {:show-version true}))
+  #
   (array/remove the-args 0)
   #
   (def [opts cmd]

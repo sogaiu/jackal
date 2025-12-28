@@ -1,6 +1,8 @@
 (import ./args :as a)
 (import ./commands :as c)
 
+(def version "DEVEL")
+
 (def usage
   `````
   Usage: jakl all-calls <file-or-dir>...
@@ -70,6 +72,10 @@
   #
   (when (get opts :show-help)
     (print usage)
+    (os/exit 0))
+  #
+  (when (get opts :show-version)
+    (print version)
     (os/exit 0))
   #
   (def cmd (get opts :command))

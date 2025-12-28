@@ -10,6 +10,9 @@
   (when (or (not head) (= head "-h") (= head "--help"))
     (break {:show-help true}))
   #
+  (when (or (not head) (= head "-v") (= head "--version"))
+    (break {:show-version true}))
+  #
   (array/remove the-args 0)
   #
   (def [opts cmd]
@@ -2863,6 +2866,8 @@
 
 
 
+(def version "2025-12-28_15-14-16")
+
 (def usage
   `````
   Usage: jakl all-calls <file-or-dir>...
@@ -2932,6 +2937,10 @@
   #
   (when (get opts :show-help)
     (print usage)
+    (os/exit 0))
+  #
+  (when (get opts :show-version)
+    (print version)
     (os/exit 0))
   #
   (def cmd (get opts :command))
