@@ -5,7 +5,7 @@
   (def head (get the-args 0))
   #
   (when (or (not head) (= head "-h") (= head "--help"))
-    (break {:help true}))
+    (break {:show-help true}))
   #
   (array/remove the-args 0)
   #

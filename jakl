@@ -8,7 +8,7 @@
   (def head (get the-args 0))
   #
   (when (or (not head) (= head "-h") (= head "--help"))
-    (break {:help true}))
+    (break {:show-help true}))
   #
   (array/remove the-args 0)
   #
@@ -2930,7 +2930,7 @@
   [_ & args]
   (def opts (a/parse-args args))
   #
-  (when (get opts :help)
+  (when (get opts :show-help)
     (print usage)
     (os/exit 0))
   #
