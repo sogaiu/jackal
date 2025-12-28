@@ -49,7 +49,7 @@
   #
   (def editor (os/getenv "VISUAL" (os/getenv "EDITOR" "emacs")))
   #
-  (merge opts 
+  (merge opts
          {:command cmd
           :default-paths default-paths
           :rest the-args
