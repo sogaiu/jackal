@@ -9,8 +9,12 @@
    :paths [["sbb.janet" "bundle/"]]}
   {:name "jell"
    :url "https://github.com/sogaiu/jell"
-   :tag "5002ee1176b5e9c6249f02d092de2e0d2a792445"
+   :tag "7eea04a6e54bb7c99052262d9ebe6111633e7382"
    :paths [["jell" "bin/"]]}
+  {:name "jipper"
+   :url "https://github.com/sogaiu/jipper"
+   :tag "ca38b69517b7e239ef5a326303ffb8af1a048e0c"
+   :paths [["jipper.janet" "src/"]]}
   {:name "niche"
    :url "https://github.com/sogaiu/niche"
    :tag "3f744cfb02b472971f82e78f16a027908a4bd717"

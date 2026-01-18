@@ -89,7 +89,7 @@
 
 # XXX: neat but possibly not great when the number of elements of
 #      byte-vals is large?
-(defn s/common-prefix
+(defn common-prefix
   [byte-vals]
   # compare the corresponding bytes of all of the byte values
   (def compares (map |(= ;$&) ;byte-vals))

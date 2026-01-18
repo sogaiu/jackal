@@ -3,7 +3,7 @@
 ########################################################################
 
 # XXX: just doing defn, defn-, varfn for the moment
-(defn fc/find-caller
+(defn find-caller
   [zloc]
   (var cur-zloc zloc)
   (var name nil)
