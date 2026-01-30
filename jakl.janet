@@ -2516,21 +2516,6 @@
 
   )
 
-(defn s/has-janet-shebang?
-  [path]
-  (with [f (file/open path)]
-    (def first-line (file/read f :line))
-    (when first-line
-      # some .js files has very long first lines and can contain
-      # a lot of strings...
-      (and (string/find "bin/env" first-line)
-           (string/find "janet" first-line)))))
-
-(defn s/looks-like-janet?
-  [path]
-  (or (string/has-suffix? ".janet" path)
-      (s/has-janet-shebang? path)))
-
 (defn s/collect-paths
   [includes &opt pred]
   (default pred identity)
@@ -2718,6 +2703,23 @@
             (- (os/clock) start-clock))))
 
 
+(comment import ./utils :prefix "")
+(defn u/has-janet-shebang?
+  [path]
+  (with [f (file/open path)]
+    (def first-line (file/read f :line))
+    (when first-line
+      # some .js files has very long first lines and can contain
+      # a lot of strings...
+      (and (string/find "bin/env" first-line)
+           (string/find "janet" first-line)))))
+
+(defn u/looks-like-janet?
+  [path]
+  (or (string/has-suffix? ".janet" path)
+      (u/has-janet-shebang? path)))
+
+
 
 ########################################################################
 
@@ -2783,7 +2785,7 @@
       the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes s/looks-like-janet?))
+    (s/collect-paths includes u/looks-like-janet?))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls
@@ -2818,7 +2820,7 @@
       the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes s/looks-like-janet?))
+    (s/collect-paths includes u/looks-like-janet?))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-callers-of
@@ -2856,7 +2858,7 @@
       the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes s/looks-like-janet?))
+    (s/collect-paths includes u/looks-like-janet?))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls-to
@@ -2876,7 +2878,7 @@
 
 
 
-(def version "2026-01-30_08-37-21")
+(def version "2026-01-30_09-06-53")
 
 (def usage
   `````
