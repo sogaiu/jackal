@@ -30,10 +30,10 @@
   )
 
 (defn s/clean-end-of-path
-  [path s/sep]
+  [path a-sep]
   (when (one? (length path))
     (break path))
-  (if (string/has-suffix? s/sep path)
+  (if (string/has-suffix? a-sep path)
     (string/slice path 0 -2)
     path))
 
