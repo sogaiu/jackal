@@ -1,5 +1,6 @@
 (import ./find-calls :as fc)
 (import ./search :as s)
+(import ./prefix :as p)
 (import ./report :as r)
 
 ########################################################################
@@ -38,7 +39,7 @@
   (def prefix
     (if (<= 0 (length paths) 1)
       ""
-      (s/common-prefix paths)))
+      (p/common-prefix paths)))
   (report all-results {:editor editor
                        :includes includes
                        :n-paths (length paths)
