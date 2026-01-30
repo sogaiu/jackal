@@ -119,7 +119,7 @@
 
 (defn find-callers-of
   [src opts]
-  (def {:name name :pred pred :exact-match exact-match} opts)
+  (def {:pattern name :pred pred :exact-match exact-match} opts)
   (default pred identity)
   #
   (def tree (j/par src))
@@ -165,7 +165,7 @@
       [y]
       (pp y))
     ``
-    {:name "pp"})
+    {:pattern "pp"})
   # =>
   @[{:col 1 :line 3 :thing "smile"}]
 
@@ -179,7 +179,7 @@
         (pp [:x x])
         (print "oh no")))
     ``
-    {:name "pp"})
+    {:pattern "pp"})
   # =>
   @[{:col 1 :line 1 :thing "hello"}
     {:col 1 :line 1 :thing "hello"}]
@@ -188,7 +188,8 @@
 
 (defn find-calls-to
   [src opts]
-  (def {:name name :pred pred :exact-match exact-match} opts)
+  (def {:pattern name :pred pred
+        :exact-match exact-match} opts)
   (default pred identity)
   #
   (def tree (j/par src))
@@ -232,7 +233,7 @@
         (pp [:x x])
         (print "oh no")))
     ``
-    {:name "pp"})
+    {:pattern "pp"})
   # =>
   @[{:col 3 :line 3 :thing "(pp x)"}
     {:col 5 :line 6 :thing "(pp [:x x])"}]

@@ -8,9 +8,11 @@
 
 (defn search-and-dump
   [opts]
-  (def {:query-fn query-fn} opts)
+  (def {:query-fn query-fn :paths paths
+        :pattern pattern} opts)
   #
-  (def [all-results _] (s/search-paths query-fn opts))
+  (def [all-results _]
+    (s/search-paths paths query-fn opts pattern))
   # output could be done via (printf "%j" all-results), but the
   # resulting output is harder to read and manipulate
   (print "[")
@@ -32,12 +34,11 @@
   #
   (def start-clock (when stop-watch (os/clock)))
   (printf "# searching space: %n ..." includes)
-  (def [all-results hit-paths] (s/search-paths query-fn opts))
+  (def [all-results hit-paths] (s/search-paths paths query-fn opts))
   (print)
-  (def prefix
-    (if (<= 0 (length paths) 1)
-      ""
-      (p/common-prefix paths)))
+  (def prefix (if (<= 0 (length paths) 1)
+                ""
+                (p/common-prefix paths)))
   (report all-results {:editor editor
                        :includes includes
                        :n-paths (length paths)
@@ -59,10 +60,9 @@
         :stop-watch stop-watch
         :rest the-args} opts)
   #
-  (def includes
-    (if (= 0 (length the-args))
-      default-paths
-      the-args))
+  (def includes (if (= 0 (length the-args))
+                  default-paths
+                  the-args))
   # find .janet files
   (def src-filepaths
     (s/collect-paths includes u/looks-like-janet?))
@@ -94,10 +94,9 @@
   (def name (get the-args 0))
   (array/remove the-args 0)
   #
-  (def includes
-    (if (= 0 (length the-args))
-      default-paths
-      the-args))
+  (def includes (if (= 0 (length the-args))
+                  default-paths
+                  the-args))
   # find .janet files
   (def src-filepaths
     (s/collect-paths includes u/looks-like-janet?))
@@ -105,13 +104,15 @@
   (when (get opts :dump)
     (search-and-dump {:query-fn fc/find-callers-of
                       :paths src-filepaths
-                      :name name :pred pred :exact-match exact-match})
+                      :pattern name :pred pred
+                      :exact-match exact-match})
     (break))
   # search the paths
   (search-and-report {:includes includes
                       :query-fn fc/find-callers-of
                       :paths src-filepaths
-                      :name name :pred pred :exact-match exact-match
+                      :pattern name :pred pred
+                      :exact-match exact-match
                       :report r/report
                       :no-prefix no-prefix
                       :limit-lines limit-lines
@@ -132,10 +133,9 @@
   (def name (get the-args 0))
   (array/remove the-args 0)
   #
-  (def includes
-    (if (= 0 (length the-args))
-      default-paths
-      the-args))
+  (def includes (if (= 0 (length the-args))
+                  default-paths
+                  the-args))
   # find .janet files
   (def src-filepaths
     (s/collect-paths includes u/looks-like-janet?))
@@ -143,13 +143,15 @@
   (when (get opts :dump)
     (search-and-dump {:query-fn fc/find-calls-to
                       :paths src-filepaths
-                      :name name :pred pred :exact-match exact-match})
+                      :pattern name :pred pred
+                      :exact-match exact-match})
     (break))
   # search the paths
   (search-and-report {:includes includes
                       :query-fn fc/find-calls-to
                       :paths src-filepaths
-                      :name name :pred pred :exact-match exact-match
+                      :pattern name :pred pred
+                      :exact-match exact-match
                       :report r/report
                       :no-prefix no-prefix
                       :limit-lines limit-lines
