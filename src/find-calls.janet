@@ -142,7 +142,9 @@
           ([e] (eprintf "failed to parse: %s" raw-code-str))))
       (when (and parsed (pred parsed))
         # ensure first non-trivial element of the tuple ends in `name`
-        (when (matcher name (string (first parsed)))
+        (when (and (matcher name (string (first parsed)))
+                   # ...and only for things that are not top-level
+                   (< 1 (length (j/path parent-zloc))))
           (def caller (find-caller parent-zloc))
           (when caller
             (def [line-no col-no caller-name] caller)
