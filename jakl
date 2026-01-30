@@ -2554,6 +2554,32 @@
   #
   filepaths)
 
+(defn s/search-paths
+  [query-fn opts]
+  (def {:name name :paths src-paths} opts)
+  #
+  (def all-results @[])
+  (def hit-paths @[])
+  (each path src-paths
+    (def src (slurp path))
+    (when (pos? (length src))
+      (when (or (not name)
+                (string/find name src))
+        (array/push hit-paths path)
+        (def results
+          (try
+            (query-fn src opts)
+            ([e]
+              (eprintf "search failed for: %s" path))))
+        (when (and results (not (empty? results)))
+          # item can have a variable number of elements
+          (each item results
+            (array/push all-results [path ;item]))))))
+  #
+  [all-results hit-paths])
+
+
+(comment import ./prefix :prefix "")
 # XXX: neat but possibly not great when the number of elements of
 #      byte-vals is large?
 (defn common-prefix
@@ -2570,7 +2596,7 @@
   #
   (string/slice (first byte-vals) 0 last-index))
 
-(defn s/common-prefix
+(defn p/common-prefix
   [byte-vals]
   (def prefix (get byte-vals 0))
   # track right end of candidate prefix
@@ -2595,50 +2621,26 @@
 
 (comment
 
-  (s/common-prefix ["ab" "abc" "abcd"])
+  (p/common-prefix ["ab" "abc" "abcd"])
   # =>
   "ab"
 
-  (s/common-prefix ["/home/alice/src/janet/src"
+  (p/common-prefix ["/home/alice/src/janet/src"
                   "/home/alice/src/janet/src/boot"
                   "/home/alice/src/janet"
                   "/home/alice/src/janet/src/boot/boot.janet"])
   # =>
   "/home/alice/src/janet"
 
-  (s/common-prefix ["ab" "abc" "" "abcd"])
+  (p/common-prefix ["ab" "abc" "" "abcd"])
   # =>
   ""
 
-  (s/common-prefix ["a" "b" "c"])
+  (p/common-prefix ["a" "b" "c"])
   # =>
   ""
 
   )
-
-(defn s/search-paths
-  [query-fn opts]
-  (def {:name name :paths src-paths} opts)
-  #
-  (def all-results @[])
-  (def hit-paths @[])
-  (each path src-paths
-    (def src (slurp path))
-    (when (pos? (length src))
-      (when (or (not name)
-                (string/find name src))
-        (array/push hit-paths path)
-        (def results
-          (try
-            (query-fn src opts)
-            ([e]
-              (eprintf "search failed for: %s" path))))
-        (when (and results (not (empty? results)))
-          # item can have a variable number of elements
-          (each item results
-            (array/push all-results [path ;item]))))))
-  #
-  [all-results hit-paths])
 
 
 (comment import ./report :prefix "")
@@ -2753,7 +2755,7 @@
   (def prefix
     (if (<= 0 (length paths) 1)
       ""
-      (s/common-prefix paths)))
+      (p/common-prefix paths)))
   (report all-results {:editor editor
                        :includes includes
                        :n-paths (length paths)
@@ -2874,7 +2876,7 @@
 
 
 
-(def version "2026-01-18_04-18-00")
+(def version "2026-01-30_08-37-21")
 
 (def usage
   `````
