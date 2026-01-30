@@ -9,7 +9,8 @@
         :limit-lines limit-lines
         :start-clock start-clock} opts)
   (var i 1)
-  (each [path line-no col-no thing] all-results
+  (each {:path path :thing thing
+         :line line-no :col col-no} all-results
     (def subpath
       (if no-prefix
         path
@@ -44,21 +45,21 @@
         :n-hit-paths n-hit-paths
         :start-clock start-clock} opts)
   (var i 1)
-  (each group-by-path (partition-by |(get $ 0) all-results)
-    (def path (get-in group-by-path [0 0]))
+  (each group-by-path (partition-by |(get $ :path) all-results)
+    (def path (get-in group-by-path [0 :path]))
     (def subpath
       (if no-prefix
         path
         (string/slice path (length prefix))))
     (printf "# %d # %s %s" i editor subpath)
     (print)
-    (each group-by-thing (->> (sort-by |(get $ 3) group-by-path)
-                              (partition-by |(get $ 3)))
-      (def thing (get-in group-by-thing [0 3]))
+    (each group-by-thing (->> (sort-by |(get $ :thing) group-by-path)
+                              (partition-by |(get $ :thing)))
+      (def thing (get-in group-by-thing [0 :thing]))
       (prinf "%s # " thing)
       (def line-nos
-        (->> (sort-by |(get $ 1) group-by-thing)
-             (map |(string (get $ 1)))))
+        (->> (sort-by |(get $ :line) group-by-thing)
+             (map |(string (get $ :line)))))
       (print (string/join line-nos " ")))
     (print)
     (++ i))

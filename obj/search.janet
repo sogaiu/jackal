@@ -90,9 +90,8 @@
             ([e]
               (eprintf "search failed for: %s" path))))
         (when (and results (not (empty? results)))
-          # item can have a variable number of elements
           (each item results
-            (array/push all-results [path ;item]))))))
+            (array/push all-results (merge item {:path path})))))))
   #
   [all-results hit-paths])
 

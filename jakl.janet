@@ -2279,7 +2279,8 @@
       (when-let [leader (first parsed)]
         (when (symbol? leader)
           (def {:bl bl :bc bc} (get node 1))
-          (array/push results [bl bc leader]))))
+          (array/push results {:line bl :col bc
+                               :thing (string leader)}))))
     #
     (set cur-zloc (j/df-next next-zloc)))
   #
@@ -2296,9 +2297,9 @@
       (pp y))
     ``)
   # =>
-  @[[1 1 'defn]
-    [3 1 'defn]
-    [5 3 'pp]]
+  @[{:col 1 :line 1 :thing "defn"}
+    {:col 1 :line 3 :thing "defn"}
+    {:col 3 :line 5 :thing "pp"}]
 
   (fc/find-calls
     ``
@@ -2311,12 +2312,12 @@
         (print "oh no")))
     ``)
   # =>
-  @[[1 1 'defn]
-    [3 3 'pp]
-    [4 3 'print]
-    [5 3 'if]
-    [6 5 'pp]
-    [7 5 'print]]
+  @[{:col 1 :line 1 :thing "defn"}
+    {:col 3 :line 3 :thing "pp"}
+    {:col 3 :line 4 :thing "print"}
+    {:col 3 :line 5 :thing "if"}
+    {:col 5 :line 6 :thing "pp"}
+    {:col 5 :line 7 :thing "print"}]
 
   )
 
@@ -2374,7 +2375,8 @@
           (def caller (fc/find-caller parent-zloc))
           (when caller
             (def [line-no col-no caller-name] caller)
-            (array/push results [line-no col-no caller-name])))))
+            (array/push results {:line line-no :col col-no
+                                 :thing (string caller-name)})))))
     #
     (set cur-zloc (j/df-next next-zloc)))
   #
@@ -2392,7 +2394,7 @@
     ``
     {:name "pp"})
   # =>
-  @[[3 1 'smile]]
+  @[{:col 1 :line 3 :thing "smile"}]
 
   (fc/find-callers-of
     ``
@@ -2406,8 +2408,8 @@
     ``
     {:name "pp"})
   # =>
-  @[[1 1 'hello]
-    [1 1 'hello]]
+  @[{:col 1 :line 1 :thing "hello"}
+    {:col 1 :line 1 :thing "hello"}]
 
   )
 
@@ -2438,7 +2440,8 @@
         # ensure first non-trivial element of the tuple ends in `name`
         (when (matcher name (string (first parsed)))
           (def {:bc bc :bl bl} (get node 1))
-          (array/push results [bl bc raw-code-str]))))
+          (array/push results {:line bl :col bc
+                               :thing raw-code-str}))))
     #
     (set cur-zloc (j/df-next next-zloc)))
   #
@@ -2458,8 +2461,8 @@
     ``
     {:name "pp"})
   # =>
-  @[[3 3 "(pp x)"]
-    [6 5 "(pp [:x x])"]]
+  @[{:col 3 :line 3 :thing "(pp x)"}
+    {:col 5 :line 6 :thing "(pp [:x x])"}]
 
   )
 
@@ -2557,9 +2560,8 @@
             ([e]
               (eprintf "search failed for: %s" path))))
         (when (and results (not (empty? results)))
-          # item can have a variable number of elements
           (each item results
-            (array/push all-results [path ;item]))))))
+            (array/push all-results (merge item {:path path})))))))
   #
   [all-results hit-paths])
 
@@ -2640,7 +2642,8 @@
         :limit-lines limit-lines
         :start-clock start-clock} opts)
   (var i 1)
-  (each [path line-no col-no thing] all-results
+  (each {:path path :thing thing
+         :line line-no :col col-no} all-results
     (def subpath
       (if no-prefix
         path
@@ -2675,21 +2678,21 @@
         :n-hit-paths n-hit-paths
         :start-clock start-clock} opts)
   (var i 1)
-  (each group-by-path (partition-by |(get $ 0) all-results)
-    (def path (get-in group-by-path [0 0]))
+  (each group-by-path (partition-by |(get $ :path) all-results)
+    (def path (get-in group-by-path [0 :path]))
     (def subpath
       (if no-prefix
         path
         (string/slice path (length prefix))))
     (printf "# %d # %s %s" i editor subpath)
     (print)
-    (each group-by-thing (->> (sort-by |(get $ 3) group-by-path)
-                              (partition-by |(get $ 3)))
-      (def thing (get-in group-by-thing [0 3]))
+    (each group-by-thing (->> (sort-by |(get $ :thing) group-by-path)
+                              (partition-by |(get $ :thing)))
+      (def thing (get-in group-by-thing [0 :thing]))
       (prinf "%s # " thing)
       (def line-nos
-        (->> (sort-by |(get $ 1) group-by-thing)
-             (map |(string (get $ 1)))))
+        (->> (sort-by |(get $ :line) group-by-thing)
+             (map |(string (get $ :line)))))
       (print (string/join line-nos " ")))
     (print)
     (++ i))
@@ -2732,12 +2735,9 @@
   # resulting output is harder to read and manipulate
   (print "[")
   (when (not (empty? all-results))
-    (def fmt (string "["
-                     (-> (length (get all-results 0))
-                         (array/new-filled "%n")
-                         (string/join " "))
-                     "]"))
-    (each r all-results (printf fmt ;r)))
+    (each r all-results
+      (printf "[%n %n %n %n]"
+              (get r :path) (get r :line) (get r :col) (get r :thing))))
   (print "]\n"))
 
 (defn c/search-and-report
@@ -2878,7 +2878,7 @@
 
 
 
-(def version "2026-01-30_09-12-12")
+(def version "2026-01-30_10-04-17")
 
 (def usage
   `````

@@ -15,12 +15,9 @@
   # resulting output is harder to read and manipulate
   (print "[")
   (when (not (empty? all-results))
-    (def fmt (string "["
-                     (-> (length (get all-results 0))
-                         (array/new-filled "%n")
-                         (string/join " "))
-                     "]"))
-    (each r all-results (printf fmt ;r)))
+    (each r all-results
+      (printf "[%n %n %n %n]"
+              (get r :path) (get r :line) (get r :col) (get r :thing))))
   (print "]\n"))
 
 (defn c/search-and-report
