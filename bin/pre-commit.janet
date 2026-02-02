@@ -10,19 +10,19 @@
 
 ########################################################################
 
-(prin "running jell...") (flush)
+(prin "* running jell...") (flush)
 (def jell-exit ($ janet ./bin/jell))
 (assertf (zero? jell-exit)
          "jell exited: %d" jell-exit)
 (print "done")
 
-(prin "copying jakl.janet to jakl...")
+(prin "* copying jakl.janet to jakl...")
 (copy-file "jakl.janet" "jakl")
 (print "done")
 
 ########################################################################
 
-(print "running niche...")
+(print "* running niche...")
 (def niche-exit ($ janet ./bin/niche.janet))
 (assertf (zero? niche-exit)
          "niche exited: %d" niche-exit)
@@ -30,7 +30,15 @@
 
 ########################################################################
 
-(print `trying some "raw" invocations...`)
+(print "* updating README...")
+(def readme-update-ext ($ janet jakl -h > README))
+(assertf (zero? readme-update-ext)
+         "updating README exited: %d" readme-update-ext)
+(print "done")
+
+########################################################################
+
+(print `* trying some "raw" invocations...`)
 
 # sourced from jakl -h output
 (def expectations
@@ -58,7 +66,7 @@
 
 ########################################################################
 
-(print "trying some invocations...")
+(print "* trying some invocations...")
 
 # sourced from jakl -h output
 (def invocations
