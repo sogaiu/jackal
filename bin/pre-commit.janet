@@ -27,7 +27,7 @@
 (print `trying some "raw" invocations...`)
 
 # sourced from jakl -h output
-(def invocations
+(def expectations
   [[5 '[./jakl all-calls data/simple.janet]]
    [900 '[./jakl all-calls data/]]
    [3 '[./jakl calls-to def data/simple.janet]]
@@ -35,7 +35,7 @@
    [1 '[./jakl who-calls default data/zipper.janet]]
    [2 '[./jakl who-calls default data/]]])
 
-(each [n cmd] invocations
+(each [n cmd] expectations
   (def new-cmd
     [(first cmd) "{:dump true}" ;(drop 1 cmd)])
   (def output ($< ;new-cmd))
