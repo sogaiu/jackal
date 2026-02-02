@@ -12,13 +12,15 @@
          "jell exited: %d" jell-exit)
 (print "done")
 
+(prin "copying jakl.janet to jakl...")
+(copy-file "jakl.janet" "jakl")
+(print "done")
+
 (print "running niche...")
 (def niche-exit ($ janet ./bin/niche.janet))
 (assertf (zero? niche-exit)
          "niche exited: %d" niche-exit)
 (print "done")
 
-(prin "copying jakl.janet to jakl...")
-(copy-file "jakl.janet" "jakl")
 (print "done")
 
