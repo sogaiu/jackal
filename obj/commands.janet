@@ -1,9 +1,9 @@
 (import ./find-calls :prefix "")
+(import ./itemize :prefix "")
 (import ./prefix :prefix "")
 (import ./report :prefix "")
 (import ./search :prefix "")
 (import ./utils :prefix "")
-(import ./visit :prefix "")
 
 ########################################################################
 
@@ -67,7 +67,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (v/visit ;includes)))
+            (i/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls
@@ -103,7 +103,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (v/visit ;includes)))
+            (i/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-callers-of
@@ -144,7 +144,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (v/visit ;includes)))
+            (i/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls-to
