@@ -2470,101 +2470,6 @@
   )
 
 
-(comment import ./search :prefix "")
-(def s/sep
-  (let [os (os/which)]
-    (if (or (= :windows os) (= :mingw os)) `\` "/")))
-
-(defn s/find-files
-  [dir &opt pred skips]
-  (default pred identity)
-  (default skips (invert [".git"]))
-  (def paths @[])
-  (defn helper
-    [a-dir]
-    (each path (os/dir a-dir)
-      (def sub-path (string a-dir s/sep path))
-      (case (os/stat sub-path :mode)
-        :directory
-        (when (not (get skips path))
-          (helper sub-path))
-        #
-        :file
-        (when (pred sub-path)
-          (array/push paths sub-path)))))
-  #
-  (helper dir)
-  #
-  paths)
-
-(comment
-
-  (s/find-files "." |(string/has-suffix? ".janet" $))
-
-  )
-
-(defn s/clean-end-of-path
-  [path a-sep]
-  (when (= 1 (length path))
-    (break path))
-  #
-  (if (string/has-suffix? a-sep path)
-    (string/slice path 0 -2)
-    path))
-
-(comment
-
-  (s/clean-end-of-path "hello/" "/")
-  # =>
-  "hello"
-
-  (s/clean-end-of-path "/" "/")
-  # =>
-  "/"
-
-  )
-
-(defn s/collect-paths
-  [includes &opt pred]
-  (default pred identity)
-  (def filepaths @[])
-  # collect file and directory paths
-  (each thing includes
-    (def apath (s/clean-end-of-path thing s/sep))
-    (def mode (os/stat apath :mode))
-    # XXX: should :link be supported?
-    (cond
-      (= :file mode)
-      (array/push filepaths apath)
-      #
-      (= :directory mode)
-      (array/concat filepaths (s/find-files apath pred))
-      #
-      (errorf "Expected file or dir but found %n for: %s" mode apath)))
-  #
-  filepaths)
-
-# query-fn should return a dictionary
-(defn s/search-paths
-  [paths query-fn opts &opt pattern]
-  #
-  (def all-results @[])
-  (def hit-paths @[])
-  (each p paths
-    (def src (slurp p))
-    (when (< 0 (length src))
-      (when (or (not pattern) (string/find pattern src))
-        (array/push hit-paths p)
-        (def results
-          (try (query-fn src opts)
-            ([e] (eprintf "search failed for: %s" p))))
-        (when (and results (not (empty? results)))
-          (each item results
-            (array/push all-results (merge item {:path p})))))))
-  #
-  [all-results hit-paths])
-
-
 (comment import ./prefix :prefix "")
 # XXX: neat but possibly not great when the number of elements of
 #      byte-vals is large?
@@ -2705,6 +2610,28 @@
             (- (os/clock) start-clock))))
 
 
+(comment import ./search :prefix "")
+# query-fn should return a dictionary
+(defn s/search-paths
+  [paths query-fn opts &opt pattern]
+  #
+  (def all-results @[])
+  (def hit-paths @[])
+  (each p paths
+    (def src (slurp p))
+    (when (< 0 (length src))
+      (when (or (not pattern) (string/find pattern src))
+        (array/push hit-paths p)
+        (def results
+          (try (query-fn src opts)
+            ([e] (eprintf "search failed for: %s" p))))
+        (when (and results (not (empty? results)))
+          (each item results
+            (array/push all-results (merge item {:path p})))))))
+  #
+  [all-results hit-paths])
+
+
 (comment import ./utils :prefix "")
 (defn u/has-janet-shebang?
   [path]
@@ -2720,6 +2647,80 @@
   [path]
   (or (string/has-suffix? ".janet" path)
       (u/has-janet-shebang? path)))
+
+
+(comment import ./visit :prefix "")
+(defn v/path-join
+  [& parts]
+  (def sep
+    (if-let [sep (dyn :path-fs-sep)]
+      sep
+      (if (let [osw (os/which)]
+            (or (= :windows osw) (= :mingw osw)))
+        `\`
+        "/")))
+  #
+  (string/join parts sep))
+
+(comment
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep "/")
+      (v/path-join "/tmp" "test.txt")))
+  # =>
+  "/tmp/test.txt"
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep "/")
+      (v/path-join "/tmp" "foo" "test.txt")))
+  # =>
+  "/tmp/foo/test.txt"
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep `\`)
+      (v/path-join "C:" "windows" "system32")))
+  # =>
+  `C:\windows\system32`
+
+  )
+
+(defn v/make-visitor
+  [& paths]
+  (def todo-paths (reverse paths)) # pop used to process from end
+  (def seen? @{})
+  #
+  (coro
+    (while (def p (array/pop todo-paths))
+      (def [ok? value] (protect (os/realpath p)))
+      (when (and ok? (not (get seen? value)))
+        (put seen? value true)
+        (yield p)
+        (when (= :directory (os/stat p :mode))
+          (each subp (reverse (os/dir p))
+            (array/push todo-paths (v/path-join p subp))))))))
+
+(comment
+
+  (def v (v/make-visitor (dyn :syspath) "/etc/fonts"))
+
+  (each p v (pp p))
+
+  )
+
+(defn v/visit
+  [& paths]
+  (def v (v/make-visitor ;paths))
+  #
+  (seq [p :in v] p))
+
+(comment
+
+  (v/visit (v/path-join (os/getenv "HOME") ".config"))
+
+  )
 
 
 
@@ -2769,7 +2770,6 @@
 
 ########################################################################
 
-
 (defn c/all-calls
   [opts]
   (def {:default-paths default-paths
@@ -2784,7 +2784,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls
@@ -2818,7 +2820,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-callers-of
@@ -2857,7 +2861,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls-to
@@ -2879,7 +2885,7 @@
 
 
 
-(def version "2026-01-30_13-48-21")
+(def version "2026-02-02_07-50-00")
 
 (def usage
   `````

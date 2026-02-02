@@ -1,8 +1,9 @@
 (import ./find-calls :as fc)
-(import ./search :as s)
 (import ./prefix :as p)
 (import ./report :as r)
+(import ./search :as s)
 (import ./utils :as u)
+(import ./visit :as v)
 
 ########################################################################
 
@@ -50,7 +51,6 @@
 
 ########################################################################
 
-
 (defn all-calls
   [opts]
   (def {:default-paths default-paths
@@ -65,7 +65,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (search-and-dump {:query-fn fc/find-calls
@@ -99,7 +101,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (search-and-dump {:query-fn fc/find-callers-of
@@ -138,7 +142,9 @@
                   the-args))
   # find .janet files
   (def src-filepaths
-    (s/collect-paths includes u/looks-like-janet?))
+    (filter |(and (= :file (os/stat $ :mode))
+                  (u/looks-like-janet? $))
+            (v/visit ;includes)))
   #
   (when (get opts :dump)
     (search-and-dump {:query-fn fc/find-calls-to
