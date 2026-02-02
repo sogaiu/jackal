@@ -69,7 +69,7 @@
 (each cmd invocations
   (def exit-code ($ ;cmd))
   (if (= 0 exit-code)
-    (printf "%n returned: %d" cmd exit-code)
+    (printf "%n exited: %d" cmd exit-code)
     (do
       (eprintf "%n returned non-zero exit code: %d" cmd exit-code)
       (os/exit 1))))
