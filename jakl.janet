@@ -2821,10 +2821,9 @@
                   default-paths
                   the-args))
   # find .janet files
-  (def src-filepaths
-    (filter |(and (= :file (os/stat $ :mode))
-                  (u/looks-like-janet? $))
-            (em/itemize ;includes)))
+  (def src-filepaths (filter |(and (= :file (os/stat $ :mode))
+                                   (u/looks-like-janet? $))
+                             (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls
@@ -2857,10 +2856,9 @@
                   default-paths
                   the-args))
   # find .janet files
-  (def src-filepaths
-    (filter |(and (= :file (os/stat $ :mode))
-                  (u/looks-like-janet? $))
-            (em/itemize ;includes)))
+  (def src-filepaths (filter |(and (= :file (os/stat $ :mode))
+                                   (u/looks-like-janet? $))
+                             (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-callers-of
@@ -2898,10 +2896,9 @@
                   default-paths
                   the-args))
   # find .janet files
-  (def src-filepaths
-    (filter |(and (= :file (os/stat $ :mode))
-                  (u/looks-like-janet? $))
-            (em/itemize ;includes)))
+  (def src-filepaths (filter |(and (= :file (os/stat $ :mode))
+                                   (u/looks-like-janet? $))
+                             (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls-to
@@ -2923,7 +2920,7 @@
 
 
 
-(def version "2026-02-03_11-53-16")
+(def version "2026-02-03_11-56-43")
 
 (def usage
   `````
