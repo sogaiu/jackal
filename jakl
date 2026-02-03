@@ -2650,13 +2650,15 @@
         :limit-lines limit-lines
         :start-clock start-clock} opts)
   (var i 1)
-  (each {:path path :thing thing
-         :line line-no :col col-no} all-results
-    (def subpath
-      (if no-prefix
-        path
-        (string/slice path (length prefix))))
-    (printf "# %d # %s +%d %s" i editor line-no subpath)
+  (each {:path path :line line-no :col col-no
+         :thing thing :matched matched} all-results
+    (def subpath (if no-prefix
+                   path
+                   (string/slice path (length prefix))))
+    (printf "# %d" i)
+    (when matched
+      (printf "# %s" matched))
+    (printf "# %s +%d %s" editor line-no subpath)
     (when (pos? (dec col-no))
       (prin (string/repeat " " (dec col-no))))
     (def lines (string/split "\n" thing))
@@ -2921,7 +2923,7 @@
 
 
 
-(def version "2026-02-03_11-27-24")
+(def version "2026-02-03_11-53-16")
 
 (def usage
   `````
