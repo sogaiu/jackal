@@ -18,9 +18,15 @@
   # resulting output is harder to read and manipulate
   (print "[")
   (when (not (empty? all-results))
-    (each r all-results
-      (printf "[%n %n %n %n]"
-              (get r :path) (get r :line) (get r :col) (get r :thing))))
+    (if (get (first all-results) :matched)
+      (each r all-results
+        (printf "[%n %n %n %n %n]"
+              (get r :path) (get r :line) (get r :col)
+              (get r :thing) (get r :matched)))
+      (each r all-results
+        (printf "[%n %n %n %n]"
+              (get r :path) (get r :line) (get r :col)
+              (get r :thing)))))
   (print "]\n"))
 
 (defn search-and-report

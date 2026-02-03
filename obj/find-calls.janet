@@ -142,13 +142,15 @@
           ([e] (eprintf "failed to parse: %s" raw-code-str))))
       (when (and parsed (pred parsed))
         # ensure first non-trivial element of the tuple ends in `name`
-        (when (and (matcher name (string (first parsed)))
+        (def head-str (string (first parsed)))
+        (when (and (matcher name head-str)
                    # ...and only for things that are not top-level
                    (< 1 (length (j/path parent-zloc))))
           (def caller (fc/find-caller parent-zloc))
           (when caller
             (def [line-no col-no caller-name] caller)
             (array/push results {:line line-no :col col-no
+                                 :matched head-str
                                  :thing (string caller-name)})))))
     #
     (set cur-zloc (j/df-next next-zloc)))
@@ -167,7 +169,7 @@
     ``
     {:pattern "pp"})
   # =>
-  @[{:col 1 :line 3 :thing "smile"}]
+  @[{:col 1 :line 3 :matched "pp" :thing "smile"}]
 
   (fc/find-callers-of
     ``
@@ -181,8 +183,8 @@
     ``
     {:pattern "pp"})
   # =>
-  @[{:col 1 :line 1 :thing "hello"}
-    {:col 1 :line 1 :thing "hello"}]
+  @[{:col 1 :line 1 :matched "pp" :thing "hello"}
+    {:col 1 :line 1 :matched "pp" :thing "hello"}]
 
   )
 
