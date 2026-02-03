@@ -63,6 +63,108 @@
 
 
 (comment import ./commands :prefix "")
+(comment import ./empathy :prefix "")
+(defn em/path-join
+  [& parts]
+  (def sep
+    (if-let [sep (dyn :path-fs-sep)]
+      sep
+      (if (let [osw (os/which)]
+            (or (= :windows osw) (= :mingw osw)))
+        `\`
+        "/")))
+  #
+  (string/join parts sep))
+
+(comment
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep "/")
+      (em/path-join "/tmp" "test.txt")))
+  # =>
+  "/tmp/test.txt"
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep "/")
+      (em/path-join "/tmp" "foo" "test.txt")))
+  # =>
+  "/tmp/foo/test.txt"
+
+  (let [sep (dyn :path-fs-sep)]
+    (defer (setdyn :path-fs-sep sep)
+      (setdyn :path-fs-sep `\`)
+      (em/path-join "C:" "windows" "system32")))
+  # =>
+  `C:\windows\system32`
+
+  )
+
+(defn em/make-itemizer
+  [& paths]
+  (def todo-paths (reverse paths)) # pop used to process from end
+  (def seen? @{})
+  #
+  (coro
+    (while (def p (array/pop todo-paths))
+      (def [ok? value] (protect (os/realpath p)))
+      (when (and ok? (not (get seen? value)))
+        (put seen? value true)
+        (yield p)
+        (when (= :directory (os/stat p :mode))
+          (each subp (reverse (os/dir p))
+            (array/push todo-paths (em/path-join p subp))))))))
+
+(comment
+
+  (def it (em/make-itemizer (dyn :syspath) "/etc/fonts"))
+
+  (each p it (pp p))
+
+  )
+
+(comment
+
+  (do
+    (var res nil)
+    (each p (em/make-itemizer "bundle")
+      (when (string/has-suffix? "info.jdn" p)
+        (set res true)
+        (break)))
+    res)
+  # =>
+  true
+
+  )
+
+(defn em/itemize
+  [& paths]
+  (def it (em/make-itemizer ;paths))
+  #
+  (seq [p :in it] p))
+
+(comment
+
+  (em/itemize (em/path-join (os/getenv "HOME") ".config"))
+
+  )
+
+(comment
+
+  (do
+    (var res nil)
+    (each p (em/itemize ".")
+      (when (string/has-suffix? "empathy.janet" p)
+        (set res true)
+        (break)))
+    res)
+  # =>
+  true
+
+  )
+
+
 (comment import ./find-calls :prefix "")
 (comment import ./jipper :prefix "")
 #! /usr/bin/env janet
@@ -2470,80 +2572,6 @@
   )
 
 
-(comment import ./itemize :prefix "")
-(defn i/path-join
-  [& parts]
-  (def sep
-    (if-let [sep (dyn :path-fs-sep)]
-      sep
-      (if (let [osw (os/which)]
-            (or (= :windows osw) (= :mingw osw)))
-        `\`
-        "/")))
-  #
-  (string/join parts sep))
-
-(comment
-
-  (let [sep (dyn :path-fs-sep)]
-    (defer (setdyn :path-fs-sep sep)
-      (setdyn :path-fs-sep "/")
-      (i/path-join "/tmp" "test.txt")))
-  # =>
-  "/tmp/test.txt"
-
-  (let [sep (dyn :path-fs-sep)]
-    (defer (setdyn :path-fs-sep sep)
-      (setdyn :path-fs-sep "/")
-      (i/path-join "/tmp" "foo" "test.txt")))
-  # =>
-  "/tmp/foo/test.txt"
-
-  (let [sep (dyn :path-fs-sep)]
-    (defer (setdyn :path-fs-sep sep)
-      (setdyn :path-fs-sep `\`)
-      (i/path-join "C:" "windows" "system32")))
-  # =>
-  `C:\windows\system32`
-
-  )
-
-(defn i/make-itemizer
-  [& paths]
-  (def todo-paths (reverse paths)) # pop used to process from end
-  (def seen? @{})
-  #
-  (coro
-    (while (def p (array/pop todo-paths))
-      (def [ok? value] (protect (os/realpath p)))
-      (when (and ok? (not (get seen? value)))
-        (put seen? value true)
-        (yield p)
-        (when (= :directory (os/stat p :mode))
-          (each subp (reverse (os/dir p))
-            (array/push todo-paths (i/path-join p subp))))))))
-
-(comment
-
-  (def v (make-visitor (dyn :syspath) "/etc/fonts"))
-
-  (each p v (pp p))
-
-  )
-
-(defn i/itemize
-  [& paths]
-  (def it (i/make-itemizer ;paths))
-  #
-  (seq [p :in it] p))
-
-(comment
-
-  (i/itemize (i/path-join (os/getenv "HOME") ".config"))
-
-  )
-
-
 (comment import ./prefix :prefix "")
 # XXX: neat but possibly not great when the number of elements of
 #      byte-vals is large?
@@ -2786,7 +2814,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (i/itemize ;includes)))
+            (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls
@@ -2822,7 +2850,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (i/itemize ;includes)))
+            (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-callers-of
@@ -2863,7 +2891,7 @@
   (def src-filepaths
     (filter |(and (= :file (os/stat $ :mode))
                   (u/looks-like-janet? $))
-            (i/itemize ;includes)))
+            (em/itemize ;includes)))
   #
   (when (get opts :dump)
     (c/search-and-dump {:query-fn fc/find-calls-to
@@ -2885,7 +2913,7 @@
 
 
 
-(def version "2026-02-02_14-09-27")
+(def version "2026-02-03_08-07-45")
 
 (def usage
   `````
