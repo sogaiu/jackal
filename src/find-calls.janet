@@ -2,31 +2,6 @@
 
 ########################################################################
 
-# XXX: just doing defn, defn-, varfn for the moment
-(defn find-caller
-  [zloc]
-  (var cur-zloc zloc)
-  (var name nil)
-  (while (def parent-zloc (j/up cur-zloc))
-    (set cur-zloc parent-zloc)
-    (def parent-node-str (j/gen (j/node parent-zloc)))
-    (def parsed
-      (try (parse parent-node-str)
-        ([e] (eprintf "failed to parse: %s" parent-node-str))))
-    (when (not parsed)
-      (set cur-zloc nil)
-      (break))
-    #
-    (def head (first parsed))
-    (when (get {'defn true 'defn- true 'varfn true} head)
-      (set name (get parsed 1))
-      (break)))
-  #
-  (when name
-    (def node (j/node cur-zloc))
-    (def {:bl bl} (get node 1))
-    [bl name]))
-
 (defn find-calls
   [src &opt opts]
   (default opts {})

@@ -22,8 +22,8 @@
       (prin (string/repeat " " (dec col-no))))
     (def lines (string/split "\n" thing))
     (if limit-lines
-      (for i 0 (min (length lines) limit-lines)
-        (print (get lines i)))
+      (for j 0 (min (length lines) limit-lines)
+        (print (get lines j)))
       (print thing))
     (print)
     (++ i))

@@ -26,10 +26,10 @@
         (assertf (and parsed (table? parsed))
                  "expected table but found: %s" (type parsed))
         (def opts parsed)
-        (def head (get the-args 0))
+        (def new-head (get the-args 0))
         (array/remove the-args 0)
-        (assertf head "expected a command but found none: %n" args)
-        [opts head])))
+        (assertf new-head "expected a command but found none: %n" args)
+        [opts new-head])))
   #
   (when (nil? (get opts :pred))
     (put opts :pred identity))
@@ -167,8 +167,6 @@
 
 (comment import ./find-calls :prefix "")
 (comment import ./jipper :prefix "")
-#! /usr/bin/env janet
-
 (comment import ./helpers :prefix "")
 # based on code by corasaurus-hex
 
@@ -833,7 +831,7 @@
   )
 
 
-(def j/version "2026-01-15_14-02-34")
+(def j/version "2026-03-16_06-41-09")
 
 # exports
 (def j/par j/l/par)
@@ -883,15 +881,14 @@
 
   )
 
-# ds - data structure
-(defn j/ds-zip
+(defn j/indexed-zip
   ``
-  Returns a zipper for nested data structures (tuple/array/table/struct),
-  given a root data structure.
+  Returns a zipper for nested indexed data structures (tuples
+  or arrays), given a root data structure.
   ``
-  [ds]
-  (j/zipper ds
-          |(or (dictionary? $) (indexed? $))
+  [indexed]
+  (j/zipper indexed
+          indexed?
           j/h/to-entries
           (fn [p xs] xs)))
 
@@ -901,7 +898,7 @@
     [:x [:y :z]])
 
   (def [the-node the-state]
-    (j/ds-zip a-node))
+    (j/indexed-zip a-node))
 
   the-node
   # =>
@@ -921,7 +918,7 @@
 
 (comment
 
-  (j/node (j/ds-zip [:a :b [:x :y]]))
+  (j/node (j/indexed-zip [:a :b [:x :y]]))
   # =>
   [:a :b [:x :y]]
 
@@ -936,7 +933,7 @@
 
   # merge is used to "remove" the prototype table of `st`
   (merge {}
-         (-> (j/ds-zip [:a [:b [:x :y]]])
+         (-> (j/indexed-zip [:a [:b [:x :y]]])
              j/state))
   # =>
   @{}
@@ -953,7 +950,7 @@
 
 (comment
 
-  (j/branch? (j/ds-zip [:a :b [:x :y]]))
+  (j/branch? (j/indexed-zip [:a :b [:x :y]]))
   # =>
   true
 
@@ -971,7 +968,7 @@
 
 (comment
 
-  (j/children (j/ds-zip [:a :b [:x :y]]))
+  (j/children (j/indexed-zip [:a :b [:x :y]]))
   # =>
   [:a :b [:x :y]]
 
@@ -988,7 +985,7 @@
 
   # merge is used to "remove" the prototype table of `st`
   (merge {}
-         (j/make-state (j/ds-zip [:a :b [:x :y]])))
+         (j/make-state (j/indexed-zip [:a :b [:x :y]])))
   # =>
   @{}
 
@@ -1017,18 +1014,18 @@
 
 (comment
 
-  (j/node (j/down (j/ds-zip [:a :b [:x :y]])))
+  (j/node (j/down (j/indexed-zip [:a :b [:x :y]])))
   # =>
   :a
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/branch?)
   # =>
   false
 
   (try
-    (-> (j/ds-zip [:a])
+    (-> (j/indexed-zip [:a])
         j/down
         j/children)
     ([e] e))
@@ -1039,7 +1036,7 @@
     #
     (merge {}
            (-> [:a [:b [:x :y]]]
-               j/ds-zip
+               j/indexed-zip
                j/down
                j/state))
     #
@@ -1060,8 +1057,8 @@
   [zloc]
   (let [[z-node st] zloc
         {:ls ls :rs rs} st
-        [r rest-rs rs] (j/h/first-rest-maybe-all rs)]
-    (when (and (not (empty? st)) rs)
+        [r rest-rs rs_] (j/h/first-rest-maybe-all rs)]
+    (when (and (not (empty? st)) rs_)
       [r
        (j/make-state zloc
                    (j/h/tuple-push ls z-node)
@@ -1072,14 +1069,14 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b])
+  (-> (j/indexed-zip [:a :b])
       j/down
       j/right
       j/node)
   # =>
   :b
 
-  (-> (j/ds-zip [:a])
+  (-> (j/indexed-zip [:a])
       j/down
       j/right)
   # =>
@@ -1096,7 +1093,7 @@
 
 (comment
 
-  (j/make-node (j/ds-zip [:a :b [:x :y]])
+  (j/make-node (j/indexed-zip [:a :b [:x :y]])
              [:a :b] [:x :y])
   # =>
   [:x :y]
@@ -1130,7 +1127,7 @@
 (comment
 
   (def m-zip
-    (j/ds-zip [:a :b [:x :y]]))
+    (j/indexed-zip [:a :b [:x :y]]))
 
   (deep=
     (-> m-zip
@@ -1175,7 +1172,7 @@
 (comment
 
   (def a-zip
-    (j/ds-zip [:a :b [:x :y]]))
+    (j/indexed-zip [:a :b [:x :y]]))
 
   (j/node a-zip)
   # =>
@@ -1212,7 +1209,7 @@
 (comment
 
   (def a-zip
-    (j/ds-zip [:a :b [:x]]))
+    (j/indexed-zip [:a :b [:x]]))
 
   (j/node (j/df-next a-zip))
   # =>
@@ -1251,14 +1248,14 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       (j/replace :w)
       j/root)
   # =>
   [:w :b [:x :y]]
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/right
@@ -1281,14 +1278,14 @@
 
 (comment
 
-  (-> (j/ds-zip [1 2 [8 9]])
+  (-> (j/indexed-zip [1 2 [8 9]])
       j/down
       (j/edit inc)
       j/root)
   # =>
   [2 2 [8 9]]
 
-  (-> (j/ds-zip [1 2 [8 9]])
+  (-> (j/indexed-zip [1 2 [8 9]])
       j/down
       (j/edit inc)
       j/right
@@ -1317,7 +1314,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       (j/insert-child :c)
       j/root)
   # =>
@@ -1338,7 +1335,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       (j/append-child :c)
       j/root)
   # =>
@@ -1369,7 +1366,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/rightmost
       j/node)
@@ -1381,8 +1378,8 @@
 (defn j/remove
   ``
   Removes the node at `zloc`, returning the z-location that would have
-  preceded it in a depth-first walk.
-  Throws an error if called at the root z-location.
+  preceded it in a depth-first walk.  Throws an error if called at the
+  root z-location.
   ``
   [zloc]
   (let [[z-node st] zloc
@@ -1417,7 +1414,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/remove
@@ -1426,7 +1423,7 @@
   :a
 
   (try
-    (j/remove (j/ds-zip [:a :b [:x :y]]))
+    (j/remove (j/indexed-zip [:a :b [:x :y]]))
     ([e] e))
   # =>
   "Called `remove` at root"
@@ -1454,7 +1451,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b :c])
+  (-> (j/indexed-zip [:a :b :c])
       j/down
       j/right
       j/right
@@ -1463,7 +1460,7 @@
   # =>
   :b
 
-  (-> (j/ds-zip [:a])
+  (-> (j/indexed-zip [:a])
       j/down
       j/left)
   # =>
@@ -1491,7 +1488,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/df-prev
@@ -1499,7 +1496,7 @@
   # =>
   :a
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/right
@@ -1532,7 +1529,7 @@
 (comment
 
   (def a-zip
-    (j/ds-zip [:a :b [:x :y]]))
+    (j/indexed-zip [:a :b [:x :y]]))
 
   (-> a-zip
       j/down
@@ -1570,7 +1567,7 @@
 (comment
 
   (def a-zip
-    (j/ds-zip [:a :b [:x :y]]))
+    (j/indexed-zip [:a :b [:x :y]]))
 
   (-> a-zip
       j/down
@@ -1595,11 +1592,18 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/rights)
   # =>
   [:b [:x :y]]
+
+  (-> (j/indexed-zip [:a :b])
+      j/down
+      j/right
+      j/rights)
+  # =>
+  []
 
   )
 
@@ -1613,13 +1617,13 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b])
+  (-> (j/indexed-zip [:a :b])
       j/down
       j/lefts)
   # =>
   []
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/right
@@ -1651,14 +1655,14 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/leftmost
       j/node)
   # =>
   :a
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/rightmost
       j/leftmost
@@ -1676,17 +1680,17 @@
 
 (comment
 
-  (j/path (j/ds-zip [:a :b [:x :y]]))
+  (j/path (j/indexed-zip [:a :b [:x :y]]))
   # =>
   nil
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/path)
   # =>
   [[:a :b [:x :y]]]
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/right
@@ -1718,7 +1722,7 @@
         [:symbol "+"] [:whitespace " "]
         [:number "1"] [:whitespace " "]
         [:number "2"]]]
-      j/ds-zip
+      j/indexed-zip
       j/down
       j/right
       j/down
@@ -1757,7 +1761,7 @@
         [:symbol "+"] [:whitespace " "]
         [:number "1"] [:whitespace " "]
         [:number "2"]]]
-      j/ds-zip
+      j/indexed-zip
       j/down
       j/right
       j/down
@@ -1793,7 +1797,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b :c])
+  (-> (j/indexed-zip [:a :b :c])
       j/down
       (j/search-from |(match (j/node $)
                       :b
@@ -1802,7 +1806,7 @@
   # =>
   :b
 
-  (-> (j/ds-zip [:a :b :c])
+  (-> (j/indexed-zip [:a :b :c])
       j/down
       (j/search-from |(match (j/node $)
                       :d
@@ -1810,7 +1814,7 @@
   # =>
   nil
 
-  (-> (j/ds-zip [:a :b :c])
+  (-> (j/indexed-zip [:a :b :c])
       j/down
       (j/search-from |(match (j/node $)
                       :a
@@ -1838,7 +1842,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:b :a :b])
+  (-> (j/indexed-zip [:b :a :b])
       j/down
       (j/search-after |(match (j/node $)
                        :b
@@ -1848,7 +1852,7 @@
   # =>
   :a
 
-  (-> (j/ds-zip [:b :a :b])
+  (-> (j/indexed-zip [:b :a :b])
       j/down
       (j/search-after |(match (j/node $)
                        :d
@@ -1856,7 +1860,7 @@
   # =>
   nil
 
-  (-> (j/ds-zip [:a [:b :c [2 [3 :smile] 5]]])
+  (-> (j/indexed-zip [:a [:b :c [2 [3 :smile] 5]]])
       (j/search-after |(match (j/node $)
                        [_ :smile]
                        true))
@@ -1897,7 +1901,7 @@
 
 (comment
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/right
       j/right
@@ -1906,21 +1910,21 @@
   # =>
   [:a :b :x :y]
 
-  (-> (j/ds-zip [:a :b [:x :y]])
+  (-> (j/indexed-zip [:a :b [:x :y]])
       j/down
       j/unwrap
       j/root)
   # =>
   [:a :b [:x :y]]
 
-  (-> (j/ds-zip [[:a]])
+  (-> (j/indexed-zip [[:a]])
       j/down
       j/unwrap
       j/root)
   # =>
   [:a]
 
-  (-> (j/ds-zip [[:a :b] [:x :y]])
+  (-> (j/indexed-zip [[:a :b] [:x :y]])
       j/down
       j/down
       j/remove
@@ -1930,11 +1934,35 @@
   [:b [:x :y]]
 
   (try
-    (-> (j/ds-zip [:a :b [:x :y]])
+    (-> (j/indexed-zip [:a :b [:x :y]])
         j/unwrap)
     ([e] e))
   # =>
   "Called `unwrap` at root"
+
+  )
+
+(defn j/eq?
+  ``
+  Compare two zlocs, `a-zloc` and `b-zloc`, for equality.
+  ``
+  [a-zloc b-zloc]
+  (and (= (length (j/lefts a-zloc)) (length (j/lefts b-zloc)))
+       (= (j/path a-zloc) (j/path b-zloc))))
+
+(comment
+
+  (def iz (j/indexed-zip [:a :b :c :b]))
+
+  (j/eq? (-> iz j/down j/right)
+       (-> iz j/down j/right j/right j/right))
+  # =>
+  false
+
+  (j/eq? (-> iz j/down j/right)
+       (-> iz j/down j/right j/right j/right j/left j/left))
+  # =>
+  true
 
   )
 
@@ -1958,9 +1986,7 @@
   (def kids @[])
   (var cur-zloc start-zloc)
   (while (and cur-zloc
-              # XXX: expensive?
-              (not (deep= (j/node cur-zloc)
-                          (j/node end-zloc)))) # left to right
+              (not (j/eq? cur-zloc end-zloc))) # left to right
     (array/push kids (j/node cur-zloc))
     (set cur-zloc (j/right cur-zloc)))
   (when (nil? cur-zloc)
@@ -1997,7 +2023,7 @@
 (comment
 
   (def start-zloc
-    (-> (j/ds-zip [:a [:b] :c :x])
+    (-> (j/indexed-zip [:a [:b] :c :x])
         j/down
         j/right))
 
@@ -2161,11 +2187,11 @@
   # =>
   @[:code @{:bc 1 :bl 1 :ec 8 :el 1}
     [:tuple @{:bc 1 :bl 1 :ec 8 :el 1}
-            [:symbol @{:bc 2 :bl 1 :ec 3 :el 1} "/"]
-            [:whitespace @{:bc 3 :bl 1 :ec 4 :el 1} " "]
-            [:number @{:bc 4 :bl 1 :ec 5 :el 1} "1"]
-            [:whitespace @{:bc 5 :bl 1 :ec 6 :el 1} " "]
-            [:number @{:bc 6 :bl 1 :ec 7 :el 1} "8"]]]
+     [:symbol @{:bc 2 :bl 1 :ec 3 :el 1} "/"]
+     [:whitespace @{:bc 3 :bl 1 :ec 4 :el 1} " "]
+     [:number @{:bc 4 :bl 1 :ec 5 :el 1} "1"]
+     [:whitespace @{:bc 5 :bl 1 :ec 6 :el 1} " "]
+     [:number @{:bc 6 :bl 1 :ec 7 :el 1} "8"]]]
 
   )
 
@@ -2332,31 +2358,6 @@
 
 
 ########################################################################
-
-# XXX: just doing defn, defn-, varfn for the moment
-(defn find-caller
-  [zloc]
-  (var cur-zloc zloc)
-  (var name nil)
-  (while (def parent-zloc (j/up cur-zloc))
-    (set cur-zloc parent-zloc)
-    (def parent-node-str (j/gen (j/node parent-zloc)))
-    (def parsed
-      (try (parse parent-node-str)
-        ([e] (eprintf "failed to parse: %s" parent-node-str))))
-    (when (not parsed)
-      (set cur-zloc nil)
-      (break))
-    #
-    (def head (first parsed))
-    (when (get {'defn true 'defn- true 'varfn true} head)
-      (set name (get parsed 1))
-      (break)))
-  #
-  (when name
-    (def node (j/node cur-zloc))
-    (def {:bl bl} (get node 1))
-    [bl name]))
 
 (defn fc/find-calls
   [src &opt opts]
@@ -2577,7 +2578,7 @@
 (comment import ./prefix :prefix "")
 # XXX: neat but possibly not great when the number of elements of
 #      byte-vals is large?
-(defn common-prefix
+'(defn common-prefix
   [byte-vals]
   # compare the corresponding bytes of all of the byte values
   (def compares (map |(= ;$&) ;byte-vals))
@@ -2663,8 +2664,8 @@
       (prin (string/repeat " " (dec col-no))))
     (def lines (string/split "\n" thing))
     (if limit-lines
-      (for i 0 (min (length lines) limit-lines)
-        (print (get lines i)))
+      (for j 0 (min (length lines) limit-lines)
+        (print (get lines j)))
       (print thing))
     (print)
     (++ i))
@@ -2920,7 +2921,7 @@
 
 
 
-(def version "2026-02-03_11-56-43")
+(def version "2026-03-16_07-43-59")
 
 (def usage
   `````

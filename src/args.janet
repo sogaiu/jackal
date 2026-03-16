@@ -23,10 +23,10 @@
         (assertf (and parsed (table? parsed))
                  "expected table but found: %s" (type parsed))
         (def opts parsed)
-        (def head (get the-args 0))
+        (def new-head (get the-args 0))
         (array/remove the-args 0)
-        (assertf head "expected a command but found none: %n" args)
-        [opts head])))
+        (assertf new-head "expected a command but found none: %n" args)
+        [opts new-head])))
   #
   (when (nil? (get opts :pred))
     (put opts :pred identity))
