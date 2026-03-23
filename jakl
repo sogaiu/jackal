@@ -2355,7 +2355,7 @@
     (def raw-code-str (j/gen node))
     (def parsed
       (try (parse raw-code-str)
-        ([e] (eprintf "failed to parse: %s" raw-code-str))))
+        ([_e] (eprintf "failed to parse: %s" raw-code-str))))
     (when (and parsed
                (if-not pred true (pred parsed)))
       (when-let [leader (first parsed)]
@@ -2413,7 +2413,7 @@
     (def parent-node-str (j/gen (j/node parent-zloc)))
     (def parsed
       (try (parse parent-node-str)
-        ([e] (eprintf "failed to parse: %s" parent-node-str))))
+        ([_e] (eprintf "failed to parse: %s" parent-node-str))))
     (when (not parsed)
       (set cur-zloc nil)
       (break))
@@ -2450,7 +2450,7 @@
       (def raw-code-str (j/gen node))
       (def parsed
         (try (parse raw-code-str)
-          ([e] (eprintf "failed to parse: %s" raw-code-str))))
+          ([_e] (eprintf "failed to parse: %s" raw-code-str))))
       (when (and parsed (pred parsed))
         # ensure first non-trivial element of the tuple ends in `name`
         (def head-str (string (first parsed)))
@@ -2522,7 +2522,7 @@
       (def raw-code-str (j/gen node))
       (def parsed
         (try (parse raw-code-str)
-          ([e] (eprintf "failed to parse: %s" raw-code-str))))
+          ([_e] (eprintf "failed to parse: %s" raw-code-str))))
       (when (and parsed (pred parsed))
         # ensure first non-trivial element of the tuple ends in `name`
         (when (matcher name (string (first parsed)))
@@ -2710,7 +2710,7 @@
         (array/push hit-paths p)
         (def results
           (try (query-fn src opts)
-            ([e] (eprintf "search failed for: %s" p))))
+            ([_e] (eprintf "search failed for: %s" p))))
         (when (and results (not (empty? results)))
           (each item results
             (array/push all-results (merge item {:path p})))))))
@@ -2900,7 +2900,7 @@
 
 
 
-(def version "2026-03-23_15-01-41")
+(def version "2026-03-23_15-07-41")
 
 (def usage
   `````
