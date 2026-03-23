@@ -9,7 +9,7 @@
          jakl calls-to <symbol> <file-or-dir>...
          jakl who-calls <symbol> <file-or-dir>...
 
-         jakl [-h|--help] [-v|--version]
+         jakl [-h|--help]|[-v|--version]
 
   Query some Janet source code for call information.
 

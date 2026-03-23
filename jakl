@@ -2900,7 +2900,7 @@
 
 
 
-(def version "2026-03-20_05-02-20")
+(def version "2026-03-23_15-01-41")
 
 (def usage
   `````
@@ -2908,7 +2908,7 @@
          jakl calls-to <symbol> <file-or-dir>...
          jakl who-calls <symbol> <file-or-dir>...
 
-         jakl [-h|--help] [-v|--version]
+         jakl [-h|--help]|[-v|--version]
 
   Query some Janet source code for call information.
 
