@@ -7,7 +7,7 @@
     (with-dyns [:out buf]
       (c/search-and-dump {:query-fn fc/find-calls-to
                           :paths ["data/location.janet"]
-                          :name "default"}))
+                          :pattern "default"}))
     buf)
   # =>
   (buffer
@@ -23,7 +23,7 @@
     (with-dyns [:out buf]
       (c/search-and-dump {:query-fn fc/find-callers-of
                           :paths ["data/zipper.janet"]
-                          :name "default"}))
+                          :pattern "default"}))
     buf)
   # =>
   (buffer
@@ -31,7 +31,8 @@
     "["
     `"data/zipper.janet" `
     `1212 1 `
-    `wrap`
+    `"wrap" `
+    `"default"`
     "]\n"
     "]\n\n")
 
